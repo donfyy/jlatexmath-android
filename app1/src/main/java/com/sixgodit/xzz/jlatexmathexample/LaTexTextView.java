@@ -4,10 +4,14 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.TextView;
 
 import org.scilab.forge.jlatexmath.core.AjLatexMath;
@@ -15,6 +19,7 @@ import org.scilab.forge.jlatexmath.core.Insets;
 import org.scilab.forge.jlatexmath.core.TeXConstants;
 import org.scilab.forge.jlatexmath.core.TeXFormula;
 import org.scilab.forge.jlatexmath.core.TeXIcon;
+import org.xml.sax.XMLReader;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -26,8 +31,9 @@ import bolts.Task;
 
 public class LaTexTextView extends TextView {
     private Context mContext;
-private  static final String LATEXPATTERN="\\$\\{(.+?)\\}\\$";
-private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
+    private static final String LATEXPATTERN = "<latex>(.+?)</latex>";
+    //        private static final String LATEXPATTERN = "\\$\\{(.+?)\\}\\$";
+    private static final String PHANTOMPATTERN = "\\\\phantom\\{(.+?)\\}";
 
     public LaTexTextView(Context context) {
         super(context);
@@ -49,18 +55,31 @@ private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
     }
 
     public void setLinketext(String text) {
-        //去除汉字偏移
-        text = getPatternText(text);
+        Html.fromHtml(text, new Html.ImageGetter() {
+            @Override
+            public Drawable getDrawable(String source) {
+                return null;
+            }
+        }, new Html.TagHandler() {
+            @Override
+            public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
+            }
+        });
         //同步画笔颜色，使生成图片与文字夜色一致
-        AjLatexMath.setColor(getCurrentTextColor());
+//        AjLatexMath.setColor(getCurrentTextColor());
         //先加载空白图片占位
-        setText(getSpannable(String.valueOf(Html.fromHtml(text))));
+//        setText(getSpannable(text));
         //异步解析公式，然后生成图片
-        setTaskSpannableText(text);
+//        setTaskSpannableText(text);
+    }
+
+    private void log(String message) {
+        Log.e("latex", message);
     }
 
     /**
      * 过滤掉所有\\phantom{}的内容，该内容用来偏移文字显示位置
+     *
      * @param text
      * @return
      */
@@ -88,7 +107,8 @@ private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
         Task.callInBackground(new Callable<ArrayList<LaTeXInfo>>() {
             @Override
             public ArrayList<LaTeXInfo> call() throws Exception {
-                return getLaTexInfoList(String.valueOf(Html.fromHtml(text)));
+                log("before getLatexInfo:" + text);
+                return getLaTexInfoList(text);
             }
         }).continueWith(new Continuation<ArrayList<LaTeXInfo>, Object>() {
             @Override
@@ -97,16 +117,17 @@ private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
                 if (laTeXInfos == null) {
                     return null;
                 }
-                SpannableString spannableString = new SpannableString(Html.fromHtml(text));
+                SpannableString spannableString = new SpannableString(text);
                 for (int i = 0; i < laTeXInfos.size(); i++) {
                     LaTeXInfo laTeXInfo = laTeXInfos.get(i);
-                    Bitmap image = BitmapCacheUtil.getInstance().getBitmapFromMemCache(laTeXInfo.getGroup()+getPaint().getTextSize() / getPaint().density);
+                    Bitmap image = BitmapCacheUtil.getInstance().getBitmapFromMemCache(laTeXInfo.getGroup() + getPaint().getTextSize() / getPaint().density);
                     if (image == null) {
                         image = getBitmap(laTeXInfo.getTeXFormula());
-                        BitmapCacheUtil.getInstance().addBitmapToMemoryCache(laTeXInfo.getGroup()+getPaint().getTextSize() / getPaint().density, image);
+                        BitmapCacheUtil.getInstance().addBitmapToMemoryCache(laTeXInfo.getGroup() + getPaint().getTextSize() / getPaint().density, image);
                     }
                     spannableString.setSpan(new VerticalImageSpan(mContext, image), laTeXInfo.getStart(), laTeXInfo.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
+                log("after getLatex info:" + spannableString);
                 setText(spannableString);
                 return null;
             }
@@ -120,6 +141,7 @@ private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
      * @return
      */
     public SpannableString getSpannable(String text) {
+        log("before getSpannable:" + text);
         //主要是使用SpannableString类，
         SpannableString spannableString = new SpannableString(text);
         //设置正则表达式的各种格式。
@@ -129,19 +151,18 @@ private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
         while (matcher.find()) {//查看是否复合正则表达式
             //去除里面复合正则表达式
             final String group = matcher.group();
-            if (group.startsWith("$")) {//是一串 LaTexMath公式
-                //先判断缓存中有没有该公式的图片,
-                Bitmap image = BitmapCacheUtil.getInstance().getBitmapFromMemCache(group);
-                if (image == null) {//如果没有，先加载空白图片
-                    image = BitmapCacheUtil.getInstance().getBitmapFromMemCache("10" + "3");
-                    if (image == null) {
-                        image = getNullBitmap(10, 3);
-                        BitmapCacheUtil.getInstance().addBitmapToMemoryCache("10" + "3", image);
-                    }
+            //先判断缓存中有没有该公式的图片,
+            Bitmap image = BitmapCacheUtil.getInstance().getBitmapFromMemCache(group);
+            if (image == null) {//如果没有，先加载空白图片
+                image = BitmapCacheUtil.getInstance().getBitmapFromMemCache("10" + "3");
+                if (image == null) {
+                    image = getNullBitmap(10, 3);
+                    BitmapCacheUtil.getInstance().addBitmapToMemoryCache("10" + "3", image);
                 }
-                spannableString.setSpan(new VerticalImageSpan(mContext, image), matcher.start(), matcher.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            spannableString.setSpan(new VerticalImageSpan(mContext, image), matcher.start(), matcher.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+        log("after getSpannable:" + String.valueOf(spannableString));
         return spannableString;
     }
 
@@ -160,12 +181,13 @@ private  static final String PHANTOMPATTERN="\\\\phantom\\{(.+?)\\}";
         while (matcher.find()) {//查看是否复合正则表达式
             //去除里面复合正则表达式
             final String group = matcher.group();
-            if (group.startsWith("$")) {//是一串 LaTexMath公式
-                TeXFormula teXFormula = TeXFormula.getPartialTeXFormula(group);
+            log("before get partial:" + group);
+            String latex = group.replaceAll("<latex>|</latex>", "");
+            TeXFormula teXFormula = TeXFormula.getPartialTeXFormula(latex);
+
 //                TeXFormula teXFormula = new TeXFormula(group);
-                LaTeXInfo laTeXInfo = new LaTeXInfo(teXFormula, matcher.start(), matcher.end(), group);
-                mLaTexInfos.add(laTeXInfo);
-            }
+            LaTeXInfo laTeXInfo = new LaTeXInfo(teXFormula, matcher.start(), matcher.end(), latex);
+            mLaTexInfos.add(laTeXInfo);
         }
         return mLaTexInfos;
     }

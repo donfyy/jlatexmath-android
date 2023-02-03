@@ -16,3 +16,5 @@ rootProject.name = "My Application"
 include ':app'
 include ':latexlibrary'
 include ':app1'
+include ':HtmlTextView'
+include ':htmlExample'
