@@ -17,6 +17,7 @@ package org.sufficientlysecure.htmltextview;
 import android.text.Html;
 import android.text.Html.ImageGetter;
 import android.text.Spanned;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,15 +27,16 @@ public class HtmlFormatter {
     private HtmlFormatter() {
     }
 
-    public static Spanned formatHtml(@NonNull final HtmlFormatterBuilder builder) {
-        return formatHtml(
-            builder.getHtml(), builder.getImageGetter(), builder.getClickableTableSpan(),
-            builder.getDrawTableLinkSpan(), new TagClickListenerProvider() {
-                @Override public OnClickATagListener provideTagClickListener() {
-                    return builder.getOnClickATagListener();
-                }
-            }, builder.getIndent(),
-            builder.isRemoveTrailingWhiteSpace()
+    public static Spanned formatHtml(TextView textView, @NonNull final HtmlFormatterBuilder builder) {
+        return formatHtml(textView,
+                builder.getHtml(), builder.getImageGetter(), builder.getClickableTableSpan(),
+                builder.getDrawTableLinkSpan(), new TagClickListenerProvider() {
+                    @Override
+                    public OnClickATagListener provideTagClickListener() {
+                        return builder.getOnClickATagListener();
+                    }
+                }, builder.getIndent(),
+                builder.isRemoveTrailingWhiteSpace()
         );
     }
 
@@ -42,8 +44,15 @@ public class HtmlFormatter {
         OnClickATagListener provideTagClickListener();
     }
 
-    public static Spanned formatHtml(@Nullable String html, ImageGetter imageGetter, ClickableTableSpan clickableTableSpan, DrawTableLinkSpan drawTableLinkSpan, TagClickListenerProvider tagClickListenerProvider, float indent, boolean removeTrailingWhiteSpace) {
-        final HtmlTagHandler htmlTagHandler = new HtmlTagHandler();
+    public static Spanned formatHtml(TextView textView,
+                                     @Nullable String html,
+                                     ImageGetter imageGetter,
+                                     ClickableTableSpan clickableTableSpan,
+                                     DrawTableLinkSpan drawTableLinkSpan,
+                                     TagClickListenerProvider tagClickListenerProvider,
+                                     float indent,
+                                     boolean removeTrailingWhiteSpace) {
+        final HtmlTagHandler htmlTagHandler = new HtmlTagHandler(textView);
         htmlTagHandler.setClickableTableSpan(clickableTableSpan);
         htmlTagHandler.setDrawTableLinkSpan(drawTableLinkSpan);
         htmlTagHandler.setOnClickATagListenerProvider(tagClickListenerProvider);

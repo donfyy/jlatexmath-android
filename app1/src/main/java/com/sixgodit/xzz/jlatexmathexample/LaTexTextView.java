@@ -31,8 +31,8 @@ import bolts.Task;
 
 public class LaTexTextView extends TextView {
     private Context mContext;
-    private static final String LATEXPATTERN = "<latex>(.+?)</latex>";
-    //        private static final String LATEXPATTERN = "\\$\\{(.+?)\\}\\$";
+    //    private static final String LATEXPATTERN = "<latex>(.+?)</latex>";
+    private static final String LATEXPATTERN = "\\$\\{(.+?)\\}\\$";
     private static final String PHANTOMPATTERN = "\\\\phantom\\{(.+?)\\}";
 
     public LaTexTextView(Context context) {
@@ -55,22 +55,22 @@ public class LaTexTextView extends TextView {
     }
 
     public void setLinketext(String text) {
-        Html.fromHtml(text, new Html.ImageGetter() {
-            @Override
-            public Drawable getDrawable(String source) {
-                return null;
-            }
-        }, new Html.TagHandler() {
-            @Override
-            public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
-            }
-        });
-        //同步画笔颜色，使生成图片与文字夜色一致
-//        AjLatexMath.setColor(getCurrentTextColor());
-        //先加载空白图片占位
-//        setText(getSpannable(text));
-        //异步解析公式，然后生成图片
-//        setTaskSpannableText(text);
+//        Html.fromHtml(text, new Html.ImageGetter() {
+//            @Override
+//            public Drawable getDrawable(String source) {
+//                return null;
+//            }
+//        }, new Html.TagHandler() {
+//            @Override
+//            public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
+//            }
+//        });
+//        同步画笔颜色，使生成图片与文字夜色一致
+        AjLatexMath.setColor(getCurrentTextColor());
+//        先加载空白图片占位
+        setText(getSpannable(text));
+//        异步解析公式，然后生成图片
+        setTaskSpannableText(text);
     }
 
     private void log(String message) {

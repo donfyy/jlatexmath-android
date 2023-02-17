@@ -68,6 +68,8 @@ public class JavaFontRenderingBox extends Box {
 		}
 	}
 
+	private Paint pFont;
+
 	public JavaFontRenderingBox(String str, int type, float size, Typeface f,
 			boolean kerning) {
 		this.str = str;
@@ -75,7 +77,7 @@ public class JavaFontRenderingBox extends Box {
 		//计算出文字需要的宽高
 //		Paint pFont=AjLatexMath.getPaint();
 //		pFont.setTextSize(AjLatexMath.getTextSize());
-		Paint pFont =new Paint();
+		pFont = new Paint(AjLatexMath.getPaint());
 		Rect rect = new Rect();
 		pFont.getTextBounds(str, 0, str.length(), rect);
 		 this.height = (float) (-rect.top * size / 2);
@@ -98,7 +100,7 @@ public class JavaFontRenderingBox extends Box {
 		drawDebug(g2, x, y);
 //		Paint st=AjLatexMath.getPaint();
 //		st.setTextSize(AjLatexMath.getTextSize());
-		Paint st =new Paint();
+		Paint st = pFont;
 		float w = st.getStrokeWidth();
 		Style s = st.getStyle();
 		Typeface f = st.getTypeface();

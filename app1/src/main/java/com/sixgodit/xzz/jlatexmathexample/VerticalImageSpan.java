@@ -32,7 +32,6 @@ public class VerticalImageSpan extends ImageSpan {
 
             int top = drHeight / 2 - fontHeight / 4;
             int bottom = drHeight / 2 + fontHeight / 4;
-
             fontMetricsInt.ascent = -bottom;
             fontMetricsInt.top = -bottom;
             fontMetricsInt.bottom = top;

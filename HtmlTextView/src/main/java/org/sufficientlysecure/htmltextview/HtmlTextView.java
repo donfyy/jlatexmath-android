@@ -98,7 +98,7 @@ public class HtmlTextView extends JellyBeanSpanFixTextView {
      *                    HtmlLocalImageGetter and HtmlRemoteImageGetter
      */
     public void setHtml(@NonNull String html, @Nullable Html.ImageGetter imageGetter) {
-        Spanned styledText = HtmlFormatter.formatHtml(
+        Spanned styledText = HtmlFormatter.formatHtml(this,
                 html, imageGetter, clickableTableSpan, drawTableLinkSpan,
                 new HtmlFormatter.TagClickListenerProvider() {
                     @Override

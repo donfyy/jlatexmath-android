@@ -32,8 +32,12 @@ import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
+
 import androidx.annotation.Nullable;
+
 import java.util.Stack;
+
 import org.xml.sax.Attributes;
 
 /**
@@ -47,7 +51,10 @@ public class HtmlTagHandler implements WrapperTagHandler {
     public static final String A_ITEM = "HTML_TEXTVIEW_ESCAPED_A_TAG";
     public static final String PLACEHOLDER_ITEM = "HTML_TEXTVIEW_ESCAPED_PLACEHOLDER";
 
-    public HtmlTagHandler() {
+    private final TextView textView;
+
+    public HtmlTagHandler(TextView textView) {
+        this.textView = textView;
     }
 
     /**
@@ -153,6 +160,9 @@ public class HtmlTagHandler implements WrapperTagHandler {
     private static class Td {
     }
 
+    private static class Latex {
+    }
+
     @Override
     public boolean handleTag(boolean opening, String tag, Editable output, Attributes attributes) {
         if (opening) {
@@ -204,6 +214,8 @@ public class HtmlTagHandler implements WrapperTagHandler {
                 start(output, new Th());
             } else if (tag.equalsIgnoreCase("td")) {
                 start(output, new Td());
+            } else if (tag.equalsIgnoreCase("latex")) {
+                start(output, new Latex());
             } else {
                 return false;
             }
@@ -272,8 +284,8 @@ public class HtmlTagHandler implements WrapperTagHandler {
                     public void onClick(View widget) {
                         if (onClickATagListenerProvider != null) {
                             boolean clickConsumed =
-                                onClickATagListenerProvider.provideTagClickListener()
-                                                           .onClick(widget, spannedText, getURL());
+                                    onClickATagListenerProvider.provideTagClickListener()
+                                            .onClick(widget, spannedText, getURL());
                             if (!clickConsumed) {
                                 super.onClick(widget);
                             }
@@ -314,6 +326,8 @@ public class HtmlTagHandler implements WrapperTagHandler {
                 end(output, Th.class, false);
             } else if (tag.equalsIgnoreCase("td")) {
                 end(output, Td.class, false);
+            } else if (tag.equalsIgnoreCase("latex")) {
+                end(output, Latex.class, false, new LatexSpan(textView));
             } else {
                 return false;
             }
